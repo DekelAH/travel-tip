@@ -16,6 +16,7 @@ window.app = {
     onShareLoc,
     onSetSortBy,
     onSetFilterBy,
+    renderLocsByUpdateStats
 }
 
 var gUserPos
@@ -63,6 +64,7 @@ function renderLocs(locs) {
     elLocList.innerHTML = strHTML || 'No locs to show'
 
     renderLocStats()
+    renderLocsByUpdateStats()
 
     if (selectedLocId) {
         const selectedLoc = locs.find(loc => loc.id === selectedLocId)
@@ -268,8 +270,16 @@ function onSetFilterBy({ txt, minRate }) {
 }
 
 function renderLocStats() {
+
     locService.getLocCountByRateMap().then(stats => {
         handleStats(stats, 'loc-stats-rate')
+    })
+}
+
+function renderLocsByUpdateStats() {
+
+    locService.getUpdatedLocsCountMap().then(stats => {
+        handleStats(stats, 'loc-stats-update')
     })
 }
 

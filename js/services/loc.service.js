@@ -17,25 +17,28 @@ import { storageService } from './async-storage.service.js'
 
 const PAGE_SIZE = 5
 const DB_KEY = 'locs'
-var gSortBy = { rate: -1, createdAt: -1 } // Default to last created
+var gSortBy = { rate: -1, created: -1 } // Default to last created
 var gFilterBy = { txt: '', minRate: 0 } // Default to last 30 days
 var gPageIdx
 
 _createLocs()
 
 export const locService = {
+
     query,
     getById,
     remove,
     save,
     setFilterBy,
     setSortBy,
-    getLocCountByRateMap
+    getLocCountByRateMap,
+    getUpdatedLocsCountMap,
 }
 
 function query() {
 
     return storageService.query(DB_KEY)
+
         .then(locs => {
             if (gFilterBy.txt) {
                 const regex = new RegExp(gFilterBy.txt, 'i')
@@ -43,10 +46,6 @@ function query() {
             }
             if (gFilterBy.minRate) {
                 locs = locs.filter(loc => loc.rate >= gFilterBy.minRate)
-            }
-
-            if (gSortBy.createdAt !== undefined) {
-                locs.sort((a, b) => (a.createdAt - b.createdAt) * gSortBy.createdAt)
             }
 
             // No paging (unused)
@@ -59,6 +58,8 @@ function query() {
                 locs.sort((p1, p2) => (p1.rate - p2.rate) * gSortBy.rate)
             } else if (gSortBy.name !== undefined) {
                 locs.sort((p1, p2) => p1.name.localeCompare(p2.name) * gSortBy.name)
+            } else if (gSortBy.created !== undefined) {
+                locs.sort((p1, p2) => (p1.createdAt - p2.createdAt) * gSortBy.created)
             }
 
             return locs
@@ -66,14 +67,17 @@ function query() {
 }
 
 function getById(locId) {
+
     return storageService.get(DB_KEY, locId)
 }
 
 function remove(locId) {
+
     return storageService.remove(DB_KEY, locId)
 }
 
 function save(loc) {
+
     if (loc.id) {
         loc.updatedAt = Date.now()
         return storageService.put(DB_KEY, loc)
@@ -84,12 +88,14 @@ function save(loc) {
 }
 
 function setFilterBy(filterBy = {}) {
+
     if (filterBy.txt !== undefined) gFilterBy.txt = filterBy.txt
     if (filterBy.minRate !== undefined && !isNaN(filterBy.minRate)) gFilterBy.minRate = filterBy.minRate
     return gFilterBy
 }
 
 function getLocCountByRateMap() {
+
     return storageService.query(DB_KEY)
         .then(locs => {
             const locCountByRateMap = locs.reduce((map, loc) => {
@@ -103,11 +109,29 @@ function getLocCountByRateMap() {
         })
 }
 
+function getUpdatedLocsCountMap() {
+
+    return storageService.query(DB_KEY)
+        .then(locs => {
+
+            const locsMap = locs.reduce((map, loc) => {
+                const hoursSinceUpdate = (Date.now() - loc.updatedAt) / (1000 * 60 * 60)
+                if (hoursSinceUpdate < 24) map.today++
+                else if (hoursSinceUpdate < 24 * 30) map.past++
+                else map.never++
+                return map
+            }, { today: 0, past: 0, never: 0 })
+            return locsMap
+        })
+}
+
 function setSortBy(sortBy = {}) {
+
     gSortBy = sortBy
 }
 
 function _createLocs() {
+
     const locs = utilService.loadFromStorage(DB_KEY)
     if (!locs || !locs.length) {
         _createDemoLocs()
