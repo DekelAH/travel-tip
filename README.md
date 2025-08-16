@@ -1,7 +1,9 @@
 # TravelTip
 #### The app that gets you somewhere
 
-
+## Exercise
+- This init upload includes 1-5 requirements
+  
 ## Description
 TravelTip is an app that keeps a list of favorite locations
 
