@@ -121,6 +121,7 @@ function getUpdatedLocsCountMap() {
                 else map.never++
                 return map
             }, { today: 0, past: 0, never: 0 })
+            locsMap.total = locs.length
             return locsMap
         })
 }
