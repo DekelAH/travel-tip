@@ -35,35 +35,29 @@ export const locService = {
     getUpdatedLocsCountMap,
 }
 
-function query() {
+async function query() {
 
-    return storageService.query(DB_KEY)
-
-        .then(locs => {
-            if (gFilterBy.txt) {
-                const regex = new RegExp(gFilterBy.txt, 'i')
-                locs = locs.filter(loc => regex.test(loc.name) && regex.test(loc.geo.address))
-            }
-            if (gFilterBy.minRate) {
-                locs = locs.filter(loc => loc.rate >= gFilterBy.minRate)
-            }
-
-            // No paging (unused)
-            if (gPageIdx !== undefined) {
-                const startIdx = gPageIdx * PAGE_SIZE
-                locs = locs.slice(startIdx, startIdx + PAGE_SIZE)
-            }
-
-            if (gSortBy.rate !== undefined) {
-                locs.sort((p1, p2) => (p1.rate - p2.rate) * gSortBy.rate)
-            } else if (gSortBy.name !== undefined) {
-                locs.sort((p1, p2) => p1.name.localeCompare(p2.name) * gSortBy.name)
-            } else if (gSortBy.created !== undefined) {
-                locs.sort((p1, p2) => (p1.createdAt - p2.createdAt) * gSortBy.created)
-            }
-
-            return locs
-        })
+    const locs = await storageService.query(DB_KEY)
+    if (gFilterBy.txt) {
+        const regex = new RegExp(gFilterBy.txt, 'i')
+        locs = locs.filter(loc => regex.test(loc.name) && regex.test(loc.geo.address))
+    }
+    if (gFilterBy.minRate) {
+        locs = locs.filter(loc_1 => loc_1.rate >= gFilterBy.minRate)
+    }
+    // No paging (unused)
+    if (gPageIdx !== undefined) {
+        const startIdx = gPageIdx * PAGE_SIZE
+        locs = locs.slice(startIdx, startIdx + PAGE_SIZE)
+    }
+    if (gSortBy.rate !== undefined) {
+        locs.sort((p1, p2) => (p1.rate - p2.rate) * gSortBy.rate)
+    } else if (gSortBy.name !== undefined) {
+        locs.sort((p1_1, p2_1) => p1_1.name.localeCompare(p2_1.name) * gSortBy.name)
+    } else if (gSortBy.created !== undefined) {
+        locs.sort((p1_2, p2_2) => (p1_2.createdAt - p2_2.createdAt) * gSortBy.created)
+    }
+    return locs
 }
 
 function getById(locId) {
@@ -82,7 +76,7 @@ function save(loc) {
         loc.updatedAt = Date.now()
         return storageService.put(DB_KEY, loc)
     } else {
-        loc.createdAt = loc.updatedAt = Date.now()
+        loc.createdAt = Date.now()
         return storageService.post(DB_KEY, loc)
     }
 }
@@ -94,36 +88,31 @@ function setFilterBy(filterBy = {}) {
     return gFilterBy
 }
 
-function getLocCountByRateMap() {
+async function getLocCountByRateMap() {
 
-    return storageService.query(DB_KEY)
-        .then(locs => {
-            const locCountByRateMap = locs.reduce((map, loc) => {
-                if (loc.rate > 4) map.high++
-                else if (loc.rate >= 3) map.medium++
-                else map.low++
-                return map
-            }, { high: 0, medium: 0, low: 0 })
-            locCountByRateMap.total = locs.length
-            return locCountByRateMap
-        })
+    const locs = await storageService.query(DB_KEY)
+    const locCountByRateMap = locs.reduce((map, loc) => {
+        if (loc.rate > 4) map.high++
+        else if (loc.rate >= 3) map.medium++
+        else map.low++
+        return map
+    }, { high: 0, medium: 0, low: 0 })
+    locCountByRateMap.total = locs.length
+    return locCountByRateMap
 }
 
-function getUpdatedLocsCountMap() {
+async function getUpdatedLocsCountMap() {
 
-    return storageService.query(DB_KEY)
-        .then(locs => {
-
-            const locsMap = locs.reduce((map, loc) => {
-                const hoursSinceUpdate = (Date.now() - loc.updatedAt) / (1000 * 60 * 60)
-                if (hoursSinceUpdate < 24) map.today++
-                else if (hoursSinceUpdate < 24 * 30) map.past++
-                else map.never++
-                return map
-            }, { today: 0, past: 0, never: 0 })
-            locsMap.total = locs.length
-            return locsMap
-        })
+    const locs = await storageService.query(DB_KEY)
+    const locsMap = locs.reduce((map, loc) => {
+        const hoursSinceUpdate = (Date.now() - loc.updatedAt) / (1000 * 60 * 60)
+        if (hoursSinceUpdate < 24) map.today++
+        else if (hoursSinceUpdate < 24 * 30) map.past++
+        else map.never++
+        return map
+    }, { today: 0, past: 0, never: 0 })
+    locsMap.total = locs.length
+    return locsMap
 }
 
 function setSortBy(sortBy = {}) {

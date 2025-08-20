@@ -169,13 +169,14 @@ function onUpdateLoc(locId) {
         })
 }
 
-function onSelectLoc(locId) {
-    return locService.getById(locId)
-        .then(displayLoc)
-        .catch(err => {
-            console.error('OOPs:', err)
-            flashMsg('Cannot display this location')
-        })
+async function onSelectLoc(locId) {
+    try {
+        const loc = await locService.getById(locId)
+        return displayLoc(loc)
+    } catch (err) {
+        console.error('OOPs:', err)
+        flashMsg('Cannot display this location')
+    }
 }
 
 function displayLoc(loc) {
